@@ -74,6 +74,15 @@ class NSWFuelClient():
 
     @tool
     def get_prices_for_location(self, postcode: str, fueltype: str, brands: List[str]) -> Dict[str, List]:
+        """
+        Returns current fuel prices for a single fuel type and a named location (postcode).
+
+        :param postcode: The NSW postcode to query fuel prices for (e.g., "2065")
+        :param fueltype: The fuel type to search for (e.g., "P95", "P98", "E10", "Diesel")
+        :param brands: List of fuel brand names to filter results (e.g., ["Caltex", "Shell", "BP"])
+        :return: Dictionary containing fuel price data for the specified location and fuel type,
+                 sorted by price in ascending order
+        """
         url = f"{self.base_url}/FuelPriceCheck/v2/fuel/prices/location"
 
         payload = {
@@ -98,6 +107,15 @@ class NSWFuelClient():
 
     @tool
     def get_nearby_prices(self, postcode: str, radius: int, fueltype: str, brands: List[str]) -> Dict[str, List[Dict]]:
+        """
+        Returns fuel prices for multiple fuel stations within a specified radius of a location.
+
+        :param postcode: The NSW postcode to query fuel prices around (e.g., "2065")
+        :param radius: Search radius in kilometers (e.g., 4)
+        :param fueltype: The fuel type to search for (e.g., "P95", "P98", "E10", "Diesel")
+        :param brands: List of fuel brand names to filter results (e.g., ["Caltex", "Shell", "BP"])
+        :return: Dictionary containing fuel price data for nearby stations, sorted by price in ascending order
+        """
         url = f"{self.base_url}/FuelPriceCheck/v2/fuel/prices/nearby"
         lat, long = self._geocode_location(postcode)
         headers = {
@@ -123,6 +141,18 @@ class NSWFuelClient():
 
     @tool
     def get_price_at_station(self, station_code: str) -> Dict[str, List[Dict]]:
+        """
+        Retrieve the current fuel prices for a single station by station code.
+
+        This calls the NSW Fuel API endpoint for a specific station and returns
+        the parsed JSON response when the request succeeds.
+
+        :param station_code: The unique station identifier used by the NSW API
+                             (passed into the endpoint path, e.g. "20594").
+        :return: Parsed JSON response as a dictionary containing price data
+                 for the requested station. Returns None if the request fails.
+        """
+
         url = f"{self.base_url}/FuelPriceCheck/v2/fuel/prices/station/{station_code}"
 
         querystring = {"state": "NSW"}
