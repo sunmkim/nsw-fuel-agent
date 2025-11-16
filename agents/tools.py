@@ -89,24 +89,6 @@ class NSWFuelClient():
 
         # Format to dd/MM/yyyy hh:mm:ss AM/PM (e.g., 15/11/2025 07:45:12 AM)
         return now.strftime("%d/%m/%Y %I:%M:%S %p")
-    
-
-    # def _geocode_location(self, address: str) -> Tuple[str, List[float]]:
-    #     """
-    #     Helper function to convert a location into its latitute and longitude
-
-    #     :param address: NSW post code or address
-    #     :return: tuple of postcode and latitude and longitude of the input address, example: ('2165', [-33.868715, 150.96973])
-    #     """
-    
-    #     url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}, NSW&country=AU&limit=1&access_token={self.mapbox_access_token}"
-    #     status_code, resp = self.get(url=url)
-
-    #     if status_code == 200:
-    #         postcode = resp["features"][0]["properties"]["context"]["postcode"]["name"]
-    #         return postcode, resp["features"][0]["geometry"]["coordinates"][::-1]
-    #     else:
-    #         logger.error(f"Failed to geocode postcode/address: {address}")
 
 
     @tool
