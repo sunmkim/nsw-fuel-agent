@@ -1,9 +1,10 @@
 import os
 from typing import Tuple, List, Dict
-from strands import Agent, tool
+from strands import Agent
 from strands.models.litellm import LiteLLMModel
+from strands.tools.executors import SequentialToolExecutor
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from tools import NSWFuelClient
+from tools import fuel_price_assistant, geocode_location
 from prompts import SYSTEM_PROMPT
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,15 +23,15 @@ model = LiteLLMModel(
 
 @app.entrypoint
 def invoke_agent(payload: Dict):
-    fuel_tools = NSWFuelClient()
+
     # define our agent
     agent = Agent(
         model=model,
         system_prompt=SYSTEM_PROMPT,
+        tool_executor=SequentialToolExecutor(),
         tools=[
-            fuel_tools.get_prices_for_location, 
-            fuel_tools.get_nearby_prices, 
-            fuel_tools.get_price_at_station
+            geocode_location,
+            fuel_price_assistant
         ]
     )
 
@@ -42,5 +43,5 @@ def invoke_agent(payload: Dict):
     
 
 if __name__ == "__main__":
-    print("Agent running...")
+    print("Agent is running...")
     app.run()

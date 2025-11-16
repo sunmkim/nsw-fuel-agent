@@ -1,11 +1,42 @@
 import os
 import requests
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Tuple, List, Dict
-from strands import tool
+from strands import Agent, tool
+from strands.models.litellm import LiteLLMModel
+from prompts import FUEL_ASSISTANT_PROMPT
 from dotenv import load_dotenv 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+
+@tool
+def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_ACCESS_TOKEN")) -> Tuple[str, List[float]]:
+    """
+    Helper function to convert a location into its latitute and longitude
+
+    :param address: NSW post code or address
+    :return: tuple of postcode and latitude and longitude of the input address, example: ('2165', [-33.868715, 150.96973])
+    """
+
+    url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}, NSW&country=AU&limit=1&access_token={mapbox_access_token}"
+    
+    try:
+        response = requests.get(url)
+        resp_obj = json.loads(response.text)
+    except Exception as err:
+        raise err
+
+    if response.status_code == 200:
+        postcode = resp_obj["features"][0]["properties"]["context"]["postcode"]["name"]
+        coordinates =  resp_obj["features"][0]["geometry"]["coordinates"][::-1]
+        logger.info(f"Geocoded address '{address}' to postcode {postcode}, lat: {coordinates[0]}, long: {coordinates[1]}")
+        return postcode, coordinates
+    else:
+        logger.error(f"Failed to geocode postcode/address: {address}")
 
 
 
@@ -48,7 +79,7 @@ class NSWFuelClient():
         if status_code == 200:
             return response['access_token']
         else:
-            print("Status code: ", status_code)
+            logger.warning(f"Status code: {status_code}")
 
     def _get_current_utc(self) -> str:
         """
@@ -60,24 +91,32 @@ class NSWFuelClient():
         return now.strftime("%d/%m/%Y %I:%M:%S %p")
     
 
-    def _geocode_location(self, postcode: str) -> Tuple[float, float]:
-        """Helper function to convert a location into its latitute and longitude"""
-    
-        url = f"https://api.mapbox.com/search/geocode/v6/forward?q=Postcode {postcode}, NSW&country=AU&limit=1&access_token={self.mapbox_access_token}"
-        status_code, resp = self.get(url=url)
+    # def _geocode_location(self, address: str) -> Tuple[str, List[float]]:
+    #     """
+    #     Helper function to convert a location into its latitute and longitude
 
-        if status_code == 200:
-            return resp["features"][0]["geometry"]["coordinates"][::-1]
-        else:
-            print(f"Failed to geocode postcode: {postcode}")
+    #     :param address: NSW post code or address
+    #     :return: tuple of postcode and latitude and longitude of the input address, example: ('2165', [-33.868715, 150.96973])
+    #     """
+    
+    #     url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}, NSW&country=AU&limit=1&access_token={self.mapbox_access_token}"
+    #     status_code, resp = self.get(url=url)
+
+    #     if status_code == 200:
+    #         postcode = resp["features"][0]["properties"]["context"]["postcode"]["name"]
+    #         return postcode, resp["features"][0]["geometry"]["coordinates"][::-1]
+    #     else:
+    #         logger.error(f"Failed to geocode postcode/address: {address}")
 
 
     @tool
-    def get_prices_for_location(self, postcode: str, fueltype: str, brands: List[str]) -> Dict[str, List]:
+    def get_prices_for_location(self, postcode: str, latitude: float, longitude: float, fueltype: str, brands: List[str]) -> Dict[str, List]:
         """
         Returns current fuel prices for a single fuel type and a named location (postcode).
 
-        :param postcode: The NSW postcode to query fuel prices for (e.g., "2065")
+        :param postcode: The NSW postcode to query fuel prices for (e.g., "2065" or "2000")
+        :param latitude: Latitude coordinate for given location in NSW
+        :param longitude: Longitude coordinate for given location in NSW
         :param fueltype: The fuel type to search for (e.g., "P95", "P98", "E10", "Diesel")
         :param brands: List of fuel brand names to filter results (e.g., ["Caltex", "Shell", "BP"])
         :return: Dictionary containing fuel price data for the specified location and fuel type,
@@ -89,9 +128,14 @@ class NSWFuelClient():
             "fueltype": fueltype,
             "brand": brands,
             "namedlocation": postcode,
+            "referencepoint": {
+                "latitude": str(latitude),
+                "longitude": str(longitude)
+            },
             "sortby": "Price",
             "sortascending": "true"
         }
+
 
         headers = {
             'content-type': 'application/json; charset=utf-8',
@@ -106,18 +150,20 @@ class NSWFuelClient():
 
 
     @tool
-    def get_nearby_prices(self, postcode: str, radius: int, fueltype: str, brands: List[str]) -> Dict[str, List[Dict]]:
+    def get_nearby_prices(self, postcode: str, latitude: float, longitude: float, radius: int, fueltype: str, brands: List[str]) -> Dict[str, List[Dict]]:
         """
         Returns fuel prices for multiple fuel stations within a specified radius of a location.
 
-        :param postcode: The NSW postcode to query fuel prices around (e.g., "2065")
+        :param address: The NSW postcode to query fuel prices around (e.g., "2065" or "2000")
+        :param latitude: Latitude coordinate for given location in NSW
+        :param longitude: Longitude coordinate for given location in NSW
         :param radius: Search radius in kilometers (e.g., 4)
         :param fueltype: The fuel type to search for (e.g., "P95", "P98", "E10", "Diesel")
         :param brands: List of fuel brand names to filter results (e.g., ["Caltex", "Shell", "BP"])
         :return: Dictionary containing fuel price data for nearby stations, sorted by price in ascending order
         """
         url = f"{self.base_url}/FuelPriceCheck/v2/fuel/prices/nearby"
-        lat, long = self._geocode_location(postcode)
+
         headers = {
             'content-type': 'application/json; charset=utf-8',
             'authorization': f"Bearer {self.fuel_api_token}",
@@ -129,8 +175,8 @@ class NSWFuelClient():
             "fueltype": fueltype,
             "brand": brands,
             "namedlocation": postcode,
-            "latitude": str(lat),
-            "longitude": str(long),
+            "latitude": str(latitude),
+            "longitude": str(longitude),
             "radius": str(radius),
             "sortby": "Price",
             "sortascending": "true"
@@ -170,23 +216,40 @@ class NSWFuelClient():
         if status_code == 200:
             return response
 
-    
+@tool
+def fuel_price_assistant(query: str) -> str:
+    """
+    Process and respond to research-related queries.
 
+    Args:
+        query: A research question requiring factual information
 
-# if __name__ == "__main__":
-#     fuel_client = NSWFuelClient()
+    Returns:
+        A detailed research answer with citations
+    """
 
-    # resp = fuel_client.get_fuel_prices_for_location(
-    #     postcode="2065",
-    #     fueltype="P95",
-    #     brands=["Caltex", "Shell", "BP"]
-    # )
-    # resp = fuel_client.get_nearby_prices(
-    #     postcode="2065",
-    #     radius=4,
-    #     fueltype="P95",
-    #     brands=["Caltex", "Shell", "BP"]
-    # )
+    # create a liteLLM model for OpenAI's gpt-5-nano
+    fuel_model = LiteLLMModel(
+        client_args={
+            "api_key": os.getenv("OPENAI_API_KEY")
+        },
+        model_id="openai/gpt-5-nano"
+    )
+    try:
+        fuel_tools = NSWFuelClient()
 
-    # resp = fuel_client.get_price_at_station(station_code="20594")
-    # print(resp)
+        fuel_agent = Agent(
+            model=fuel_model,
+            system_prompt=FUEL_ASSISTANT_PROMPT,
+            tools=[
+                fuel_tools.get_prices_for_location, 
+                fuel_tools.get_nearby_prices, 
+                fuel_tools.get_price_at_station
+            ]
+        )
+
+        # Call the agent and return its response
+        response = fuel_agent(query)
+        return str(response)
+    except Exception as e:
+        return f"Error in fuel pricing assistant: {str(e)}"
