@@ -210,6 +210,7 @@ def fuel_price_assistant(query: str) -> str:
         A detailed research answer with citations
     """
 
+    print("Routed to Fuel Price Assistant")
     # create a liteLLM model for OpenAI's gpt-5-nano
     fuel_model = LiteLLMModel(
         client_args={
