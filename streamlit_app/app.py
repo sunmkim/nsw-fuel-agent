@@ -205,7 +205,7 @@ def main():
             st.markdown(prompt)
 
         # Generate assistant response
-        with st.chat_message(name="assistant", avatar="static/NSW-ONLY-logo.png"):
+        with st.chat_message(name="assistant", avatar="static/favicon.png"):
             message_placeholder = st.empty()
             chunk_buffer = ""
             with st.status("AI is thinking...", expanded=True) as status: 

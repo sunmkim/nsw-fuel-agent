@@ -6,7 +6,9 @@ from datetime import datetime, timezone
 from typing import Tuple, List, Dict
 from strands import Agent, tool
 from strands.models.litellm import LiteLLMModel
-from prompts import FUEL_ASSISTANT_PROMPT
+from strands.tools.mcp import MCPClient
+from mcp.client.streamable_http import streamablehttp_client
+from prompts import FUEL_ASSISTANT_PROMPT, MAPBOX_ASSISTANT_PROMPT
 from dotenv import load_dotenv 
 load_dotenv()
 
@@ -236,3 +238,38 @@ def fuel_price_assistant(query: str) -> str:
         return str(response)
     except Exception as e:
         return f"Error in fuel pricing assistant: {str(e)}"
+
+@tool
+def mapbox_assistant(query: str) -> str:
+    """
+    Process and respond to Mapbox-related queries using a specialized Mapbox agent.
+    """
+
+    # define our Mapbox MCP client 
+    streamable_http_mcp_client = MCPClient(
+        lambda: streamablehttp_client(
+            url="https://mcp.mapbox.com/mcp",
+            headers={"Authorization": f"Bearer {os.getenv('MAPBOX_ACCESS_TOKEN')}"}
+        )
+    )
+    mapbox_model = LiteLLMModel(
+        client_args={
+            "api_key": os.getenv("OPENAI_API_KEY")
+        },
+        model_id="openai/gpt-5-nano"
+    )
+    with streamable_http_mcp_client:
+        mapbox_tools = streamable_http_mcp_client.list_tools_sync()
+            
+        try:
+            print("Routed to Mapbox Assistant")
+            # Create the mapbox agent with tools from Mapbox MCP server
+            mapbox_agent = Agent(
+                model=mapbox_model,
+                system_prompt=MAPBOX_ASSISTANT_PROMPT,
+                tools=[mapbox_tools],
+            )
+            response = mapbox_agent(query)
+            return str(response)
+        except Exception as e:
+            return f"Error processing your mathematical query: {str(e)}"
