@@ -3,7 +3,8 @@ from typing import Tuple, List, Dict
 from strands import Agent
 from strands.models.litellm import LiteLLMModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from tools import fuel_price_assistant, mapbox_assistant, geocode_location
+from strands.tools.executors import SequentialToolExecutor
+from tools import geocode_location, fuel_price_assistant, mapbox_assistant
 from prompts import SYSTEM_PROMPT
 from dotenv import load_dotenv
 load_dotenv()
@@ -20,13 +21,6 @@ model = LiteLLMModel(
     model_id="openai/gpt-5-nano"
 )
 
-# # define our Mapbox MCP client 
-# streamable_http_mcp_client = MCPClient(
-#     lambda: streamablehttp_client(
-#         url="https://mcp.mapbox.com/mcp",
-#         headers={"Authorization": f"Bearer {os.getenv('MAPBOX_ACCESS_TOKEN')}"}
-#     )
-# )
 
 # to debug agents
 def debugger_callback_handler(**kwargs):
@@ -36,16 +30,14 @@ def debugger_callback_handler(**kwargs):
 
 @app.entrypoint
 async def invoke_agent(payload: Dict):
-  
-            
     # define our agent
     agent = Agent(
         model=model,
         system_prompt=SYSTEM_PROMPT,
         tools=[
             geocode_location,
+            fuel_price_assistant,
             mapbox_assistant,
-            fuel_price_assistant
         ]
         # callback_handler=debugger_callback_handler,
         # tool_executor=SequentialToolExecutor(),

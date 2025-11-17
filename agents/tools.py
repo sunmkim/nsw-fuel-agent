@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @tool
-def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_ACCESS_TOKEN")) -> Tuple[str, List[float]]:
+def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_API_KEY")) -> Tuple[str, List[float]]:
     """
     Helper function to convert a location into its latitute and longitude
 
@@ -44,7 +44,6 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
 
 class NSWFuelClient():
     def __init__(self):
-        self.mapbox_access_token = os.getenv("MAPBOX_ACCESS_TOKEN")
         self.base_url = os.getenv("NSW_API_BASE_URL")
         self.fuel_api_token = self._get_access_token()
 
@@ -239,18 +238,30 @@ def fuel_price_assistant(query: str) -> str:
     except Exception as e:
         return f"Error in fuel pricing assistant: {str(e)}"
 
+
 @tool
 def mapbox_assistant(query: str) -> str:
     """
     Process and respond to Mapbox-related queries using a specialized Mapbox agent.
+    Args:
+        query: A research question requiring factual information
+
+    Returns:
+        A detailed research answer with citations
     """
 
     # define our Mapbox MCP client 
     streamable_http_mcp_client = MCPClient(
         lambda: streamablehttp_client(
             url="https://mcp.mapbox.com/mcp",
-            headers={"Authorization": f"Bearer {os.getenv('MAPBOX_ACCESS_TOKEN')}"}
-        )
+            headers={"Authorization": f"Bearer {os.getenv('MAPBOX_API_KEY')}"}
+        ),
+        tool_filters={"allowed": [
+            "directions_tool", 
+            "reverse_geocode_tool", 
+            "static_map_image_tool", 
+            "search_and_geocode_tool"
+        ]}
     )
     mapbox_model = LiteLLMModel(
         client_args={
