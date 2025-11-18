@@ -292,7 +292,7 @@ def fuel_price_assistant(query: str) -> str:
     """
 
     print("Routed to Fuel Price Assistant")
-    
+
     # create a OpenAI model for gpt-5-nano
     fuel_model = OpenAIModel(
         client_args={
