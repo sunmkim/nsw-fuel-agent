@@ -1,17 +1,15 @@
 import os
+import asyncio
 from typing import Tuple, List, Dict
 from strands import Agent
-# import litellm
-# from strands.models.litellm import LiteLLMModel
 from strands.models.openai import OpenAIModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from strands.tools.executors import SequentialToolExecutor
-from tools import geocode_location, fuel_price_assistant, mapbox_assistant
+from tools import fuel_price_assistant, directions_assistant
+from memory.utils import create_memory_resource, create_memory_session
 from prompts import SYSTEM_PROMPT
 from dotenv import load_dotenv
 load_dotenv()
 
-# litellm._turn_on_debug()
 
 # initialize runtime app
 app = BedrockAgentCoreApp()
@@ -21,7 +19,7 @@ model = OpenAIModel(
     client_args={
         "api_key": os.getenv("OPENAI_API_KEY")
     },
-    model_id="gpt-5-nano"
+    model_id="gpt-5"
 )
 
 
@@ -33,17 +31,27 @@ def debugger_callback_handler(**kwargs):
 
 @app.entrypoint
 async def invoke_agent(payload: Dict):
+    # create memory manager and user session
+    # memory = create_memory_resource(
+    #     memory_name=MEMORY_NAME
+    # )
+    # user_session = create_memory_session(
+    #     actor_id=ACTOR_ID,
+    #     session_id=SESSION_ID,
+    #     memory_id=memory.id
+    # )
+    
     # define our agent
     agent = Agent(
         model=model,
+        description="You are an orchestrator agent helping to assist the user regarding fuel prices in NSW.",
         system_prompt=SYSTEM_PROMPT,
         tools=[
-            geocode_location,
             fuel_price_assistant,
-            mapbox_assistant,
+            directions_assistant,
         ],
+        # hooks=[MemoryHook(ACTOR_ID, SESSION_ID, user_session)],
         # callback_handler=debugger_callback_handler,
-        tool_executor=SequentialToolExecutor(),
     )
 
     user_input = payload.get("prompt")
@@ -59,7 +67,6 @@ async def invoke_agent(payload: Dict):
             ):
                 tool_name = event["current_tool_use"]["name"]
                 yield f"Used tool: {tool_name}"
-
             if "data" in event:
                 yield event["data"]
     except Exception as err:

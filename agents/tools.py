@@ -6,12 +6,11 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Tuple, List, Dict
 from strands import Agent, tool
-# from strands.models.litellm import LiteLLMModel
 from strands.models.openai import OpenAIModel
 from strands.tools.mcp import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
 from models import Station, Coordinates, Price
-from prompts import FUEL_ASSISTANT_PROMPT, MAPBOX_ASSISTANT_PROMPT
+from prompts import FUEL_ASSISTANT_PROMPT, DIRECTIONS_ASSISTANT_PROMPT
 from dotenv import load_dotenv 
 load_dotenv()
 
@@ -23,11 +22,11 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
     """
     Helper function to convert a location into its latitute and longitude
 
-    :param address: NSW post code or address
+    :param address: NSW address
     :return: Pydantic model called Coordinates, a named tuple of postcode and latitude and longitude of the input address
     """
 
-    url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}, NSW&country=AU&limit=1&access_token={mapbox_access_token}"
+    url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}&country=AU&limit=1&access_token={mapbox_access_token}"
     
     try:
         response = requests.get(url)
@@ -298,15 +297,18 @@ def fuel_price_assistant(query: str) -> str:
         client_args={
             "api_key": os.getenv("OPENAI_API_KEY")
         },
-        model_id="gpt-5-nano"
+        model_id="gpt-5"
     )
     try:
         fuel_tools = NSWFuelClient()
 
         fuel_agent = Agent(
+            name="fuel_agent",
+            description="Agent to get fuel prices for a given location or fuel station",
             model=fuel_model,
             system_prompt=FUEL_ASSISTANT_PROMPT,
             tools=[
+                geocode_location,
                 fuel_tools.get_prices_for_location, 
                 fuel_tools.get_nearby_prices, 
                 fuel_tools.get_price_at_station
@@ -321,9 +323,9 @@ def fuel_price_assistant(query: str) -> str:
 
 
 @tool
-def mapbox_assistant(query: str) -> str:
+def directions_assistant(query: str) -> str:
     """
-    Process and respond to Mapbox-related queries using a specialized Mapbox agent.
+    Process and respond to queries related to driving directions using a specialized agent using Mapbox tools.
     Args:
         query: A research question requiring factual information
 
@@ -340,28 +342,29 @@ def mapbox_assistant(query: str) -> str:
         tool_filters={"allowed": [
             "directions_tool", 
             "reverse_geocode_tool", 
-            "static_map_image_tool", 
-            "search_and_geocode_tool"
+            # "static_map_image_tool", 
+            # "search_and_geocode_tool"
         ]}
     )
     mapbox_model = OpenAIModel(
         client_args={
             "api_key": os.getenv("OPENAI_API_KEY")
         },
-        model_id="gpt-5-nano"
+        model_id="gpt-5"
     )
     with streamable_http_mcp_client:
         mapbox_tools = streamable_http_mcp_client.list_tools_sync()
             
         try:
-            print("Routed to Mapbox Assistant")
-            # Create the mapbox agent with tools from Mapbox MCP server
-            mapbox_agent = Agent(
+            # Create the directions agent with tools from Mapbox MCP server
+            directions_agent = Agent(
+                name="directions_agent",
+                description="Agent to provide directions",
                 model=mapbox_model,
-                system_prompt=MAPBOX_ASSISTANT_PROMPT,
-                tools=[mapbox_tools],
+                system_prompt=DIRECTIONS_ASSISTANT_PROMPT,
+                tools=[mapbox_tools, geocode_location],
             )
-            response = mapbox_agent(query)
+            response = directions_agent(query)
             return str(response)
         except Exception as e:
             return f"Error processing your mathematical query: {str(e)}"

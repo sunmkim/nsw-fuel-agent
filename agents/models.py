@@ -15,7 +15,7 @@ class Price(BaseModel):
 
     station_code: str = Field(description="Code value associated with the station for this price")
     fueltype: str = Field(description="Type of fuel")
-    price: float = Field(description="Price of the associated fueltype, in AUD per litre")
+    price: float = Field(description="Price of the associated fueltype, in Australian cents per litre")
     last_updated: str = Field(description="Date time of the most recent price of fuel")
 
 
@@ -32,7 +32,7 @@ class Coordinates(BaseModel):
 
 
 class Station(BaseModel):
-    """Information about a fuel station and its current prices.
+    """Information about a service station and its current prices.
 
     Attributes
     - name: Station display name.
@@ -52,7 +52,7 @@ class Station(BaseModel):
     address: str = Field(description="Address of the station")
     coordinates: Coordinates
     distance: Optional[float] = None
-    station_code: str = Field(description="Code value associated with that station")
+    station_code: str = Field(description="Unique idenftifying code value associated with that station")
     stationid: Optional[str] = Field(default=None, description="Unique identifier for the station")
-    prices: List[Price]
+    prices: List[Price] = Field(description="A list of 'Price' class associated with this station.")
     
