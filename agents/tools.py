@@ -2,12 +2,15 @@ import os
 import requests
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Tuple, List, Dict
 from strands import Agent, tool
-from strands.models.litellm import LiteLLMModel
+# from strands.models.litellm import LiteLLMModel
+from strands.models.openai import OpenAIModel
 from strands.tools.mcp import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
+from models import Station, Coordinates, Price
 from prompts import FUEL_ASSISTANT_PROMPT, MAPBOX_ASSISTANT_PROMPT
 from dotenv import load_dotenv 
 load_dotenv()
@@ -21,7 +24,7 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
     Helper function to convert a location into its latitute and longitude
 
     :param address: NSW post code or address
-    :return: tuple of postcode and latitude and longitude of the input address, example: ('2165', [-33.868715, 150.96973])
+    :return: Pydantic model called Coordinates, a named tuple of postcode and latitude and longitude of the input address
     """
 
     url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}, NSW&country=AU&limit=1&access_token={mapbox_access_token}"
@@ -36,7 +39,7 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
         postcode = resp_obj["features"][0]["properties"]["context"]["postcode"]["name"]
         coordinates =  resp_obj["features"][0]["geometry"]["coordinates"][::-1]
         logger.info(f"Geocoded address '{address}' to postcode {postcode}, lat: {coordinates[0]}, long: {coordinates[1]}")
-        return postcode, coordinates
+        return Coordinates(latitude=coordinates[0], longitude=coordinates[1])
     else:
         logger.error(f"Failed to geocode postcode/address: {address}")
 
@@ -129,7 +132,41 @@ class NSWFuelClient():
         }
 
         status_code, response = self.post(url, data=json.dumps(payload), headers=headers)
-        return response
+
+        if status_code == 200:
+            stations = []
+            grouped_prices = defaultdict(list)
+            for price in response["prices"]:
+                station_code = str(price["stationcode"])
+                if station_code is None:
+                    continue
+                grouped_prices[station_code].append(
+                    Price(
+                        station_code=station_code,
+                        fueltype=price["fueltype"], 
+                        price=price["price"], 
+                        last_updated=price["lastupdated"]
+                    )
+                )    
+            prices_dict = dict(grouped_prices)
+
+            for station in response["stations"]:
+                stations.append(
+                    Station(
+                        name=station["name"], 
+                        brand=station["brand"], 
+                        address=station["address"],
+                        coordinates=Coordinates(
+                            latitude=station["location"]["latitude"], 
+                            longitude=station["location"]["longitude"]
+                        ),
+                        distance=station["location"]["distance"],
+                        station_code=str(station["code"]),
+                        prices=prices_dict.get(str(station["code"]))
+                    )
+                )
+            return stations
+        # return response
 
 
     @tool
@@ -165,7 +202,40 @@ class NSWFuelClient():
             "sortascending": "true"
         }
         status_code, response = self.post(url, data=json.dumps(payload), headers=headers)
-        return response
+
+        if status_code == 200:
+            stations = []
+            grouped_prices = defaultdict(list)
+            for price in response["prices"]:
+                station_code = str(price["stationcode"])
+                if station_code is None:
+                    continue
+                grouped_prices[station_code].append(
+                    Price(
+                        station_code=station_code,
+                        fueltype=price["fueltype"], 
+                        price=price["price"], 
+                        last_updated=price["lastupdated"]
+                    )
+                )    
+            prices_dict = dict(grouped_prices)
+
+            for station in response["stations"]:
+                stations.append(
+                    Station(
+                        name=station["name"], 
+                        brand=station["brand"], 
+                        address=station["address"],
+                        coordinates=Coordinates(
+                            latitude=station["location"]["latitude"], 
+                            longitude=station["location"]["longitude"]
+                        ),
+                        distance=station["location"]["distance"],
+                        station_code=str(station["code"]),
+                        prices=prices_dict.get(str(station["code"]))
+                    )
+                )
+            return stations
 
 
     @tool
@@ -195,9 +265,19 @@ class NSWFuelClient():
         }
 
         status_code, response = self.get(url=url, headers=headers, params=querystring)
-
+        
         if status_code == 200:
-            return response
+            prices = []
+            for price in response["prices"]:
+                prices.append(
+                    Price(
+                        station_code=station_code,
+                        fueltype=price["fueltype"], 
+                        price=price["price"], 
+                        last_updated=price["lastupdated"]
+                    )
+                )
+            return prices
 
 @tool
 def fuel_price_assistant(query: str) -> str:
@@ -212,12 +292,13 @@ def fuel_price_assistant(query: str) -> str:
     """
 
     print("Routed to Fuel Price Assistant")
-    # create a liteLLM model for OpenAI's gpt-5-nano
-    fuel_model = LiteLLMModel(
+    
+    # create a OpenAI model for gpt-5-nano
+    fuel_model = OpenAIModel(
         client_args={
             "api_key": os.getenv("OPENAI_API_KEY")
         },
-        model_id="openai/gpt-5-nano"
+        model_id="gpt-5-nano"
     )
     try:
         fuel_tools = NSWFuelClient()
@@ -263,11 +344,11 @@ def mapbox_assistant(query: str) -> str:
             "search_and_geocode_tool"
         ]}
     )
-    mapbox_model = LiteLLMModel(
+    mapbox_model = OpenAIModel(
         client_args={
             "api_key": os.getenv("OPENAI_API_KEY")
         },
-        model_id="openai/gpt-5-nano"
+        model_id="gpt-5-nano"
     )
     with streamable_http_mcp_client:
         mapbox_tools = streamable_http_mcp_client.list_tools_sync()

@@ -5,8 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "strands-agents[litellm]>=1.0.0",
     "strands-agents-tools>=0.2.0",
     "bedrock-agentcore-starter-toolkit>=0.1.33",
     "mcp[cli]>=1.21.1",
+    "strands-agents[openai]>=1.16.0",
 ]

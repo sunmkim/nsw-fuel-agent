@@ -1,7 +1,9 @@
 import os
 from typing import Tuple, List, Dict
 from strands import Agent
-from strands.models.litellm import LiteLLMModel
+# import litellm
+# from strands.models.litellm import LiteLLMModel
+from strands.models.openai import OpenAIModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands.tools.executors import SequentialToolExecutor
 from tools import geocode_location, fuel_price_assistant, mapbox_assistant
@@ -9,16 +11,17 @@ from prompts import SYSTEM_PROMPT
 from dotenv import load_dotenv
 load_dotenv()
 
+# litellm._turn_on_debug()
 
 # initialize runtime app
 app = BedrockAgentCoreApp()
 
 # create a liteLLM model for OpenAI's gpt-5-nano
-model = LiteLLMModel(
+model = OpenAIModel(
     client_args={
         "api_key": os.getenv("OPENAI_API_KEY")
     },
-    model_id="openai/gpt-5-nano"
+    model_id="gpt-5-nano"
 )
 
 
@@ -38,9 +41,9 @@ async def invoke_agent(payload: Dict):
             geocode_location,
             fuel_price_assistant,
             mapbox_assistant,
-        ]
+        ],
         # callback_handler=debugger_callback_handler,
-        # tool_executor=SequentialToolExecutor(),
+        tool_executor=SequentialToolExecutor(),
     )
 
     user_input = payload.get("prompt")
