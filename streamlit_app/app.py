@@ -3,6 +3,7 @@ import os
 import re
 import requests
 import time
+import base64
 from typing import Dict, Iterator, List
 
 import boto3
@@ -13,14 +14,50 @@ logger = get_logger(__name__)
 logger.setLevel("INFO")
 
 
+def _get_base64_image(image_path: str) -> str:
+    """Return base64-encoded string for the given image file."""
+    try:
+        with open(image_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode()
+        return encoded
+    except FileNotFoundError:
+        return ""
+
+
+_bg_b64 = _get_base64_image(os.path.join("static", "favicon.png"))
+if _bg_b64:
+    page_bg_img = f"""
+    <style>
+    [data-testid="stAppViewContainer"] {{
+        position: relative;
+        z-index: 0;
+    }}
+    [data-testid="stAppViewContainer"]::before {{
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/png;base64,{_bg_b64}");
+        background-position: center;
+        background-size: 30%;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        opacity: 0.25;
+        z-index: -1;
+        pointer-events: none;
+    }}
+    </style>
+    """
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+else:
+    # Fallback: no background image found
+    st.info("Background image not found at 'static/favicon.png'.")
+
 # Page config
 st.set_page_config(
-    page_title="Bedrock AgentCore Chat",
-    page_icon="static/gen-ai-dark.svg",
+    page_title="NSW Fuel Assistant",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
 
 
 def clean_response_text(text: str, show_thinking: bool = True) -> str:
@@ -207,7 +244,7 @@ def main():
             st.markdown(prompt)
 
         # Generate assistant response
-        with st.chat_message(name="assistant", avatar="static/favicon.png"):
+        with st.chat_message(name="assistant"):
             message_placeholder = st.empty()
             chunk_buffer = ""
             with st.status("AI is thinking...", expanded=True) as status: 
