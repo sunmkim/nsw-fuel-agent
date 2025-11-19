@@ -9,6 +9,10 @@ It also makes use of [Mapbox MCP server](https://docs.mapbox.com/api/guides/mcp-
 
 ## Architecture
 
+Current architecture
+
+![AWS Architecture](images/diagram.png "Swarm architecture on AWS Bedrock Agentcore")
+
 ### Swarm
 This is a multi-agent system that utilizes the swarm collaboration pattern. This pattern uses a group of agents that work together on some task while exchanging information/state between them directly and iteratively. There is no central orchestrator and is a decentralized pattern.
 
