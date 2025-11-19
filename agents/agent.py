@@ -102,7 +102,7 @@ async def invoke_agent(payload: Dict):
                     print(log_str)
                     yield log_str
 
-                # Monitor agent events
+                # Monitor agent events, including tool use
                 elif event.get("type") == "multiagent_node_stream":
                     inner_event = event["event"]
                     if "current_tool_use" in inner_event and tool_name != inner_event["current_tool_use"]["name"] and inner_event["current_tool_use"]["name"] != "handoff_to_agent":
