@@ -165,7 +165,6 @@ class NSWFuelClient():
                     )
                 )
             return stations
-        # return response
 
 
     @tool

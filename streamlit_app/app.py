@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import requests
 import time
@@ -168,7 +169,7 @@ def invoke_agent_streaming(
                     line = line[6:]
                     # Parse and clean each chunk
                     parsed_chunk = parse_streaming_chunk(line)
-                    if "Used tool" in parsed_chunk:
+                    if "Used assistant" in parsed_chunk:
                         stripped_str = parsed_chunk.strip()
                         cleaned_str = stripped_str.replace('"', '')
                         st.write(f"{cleaned_str}")
@@ -184,7 +185,6 @@ def invoke_agent_streaming(
 
 
 def main():
-    st.title("NSW Fuel Assistant")
 
     # get available agent runtimes
     # available_agents = get_agent_runtimes()
@@ -193,10 +193,12 @@ def main():
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    
+    st.title("NSW Fuel Assistant")
 
     # Chat input
     if prompt := st.chat_input("Type your message here..."):
-       
+    
         # Add user message to chat history
         st.session_state.messages.append(
             {"role": "user", "content": prompt}

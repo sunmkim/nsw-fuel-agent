@@ -9,4 +9,5 @@ dependencies = [
     "bedrock-agentcore-starter-toolkit>=0.1.33",
     "mcp[cli]>=1.21.1",
     "strands-agents[openai]>=1.16.0",
+    "pandas>=2.3.3",
 ]

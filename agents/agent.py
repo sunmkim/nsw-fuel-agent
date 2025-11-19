@@ -66,7 +66,7 @@ async def invoke_agent(payload: Dict):
                 and event["current_tool_use"].get("name") != tool_name
             ):
                 tool_name = event["current_tool_use"]["name"]
-                yield f"Used tool: {tool_name}"
+                yield f"Used assistant: {tool_name}"
             if "data" in event:
                 yield event["data"]
     except Exception as err:
