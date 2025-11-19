@@ -37,11 +37,11 @@ if _bg_b64:
         position: fixed;
         inset: 0;
         background-image: url("data:image/png;base64,{_bg_b64}");
-        background-position: center;
+        background-position: center top 130px;
         background-size: 30%;
         background-attachment: fixed;
         background-repeat: no-repeat;
-        opacity: 0.25;
+        opacity: 0.18;
         z-index: -1;
         pointer-events: none;
     }}
@@ -99,46 +99,7 @@ def clean_response_text(text: str, show_thinking: bool = True) -> str:
     # Clean up multiple newlines
     text = re.sub(r"\n{3,}", "\n\n", text)
 
-    # Clean up thinking
-    if not show_thinking:
-        text = re.sub(r"<thinking>.*?</thinking>", "", text)
-
     return text.strip()
-
-
-def extract_text_from_response(data) -> str:
-    """Extract text content from response data in various formats"""
-    if isinstance(data, dict):
-        # Handle format: {'role': 'assistant', 'content': [{'text': 'Hello!'}]}
-        if "role" in data and "content" in data:
-            content = data["content"]
-            if isinstance(content, list) and len(content) > 0:
-                if isinstance(content[0], dict) and "text" in content[0]:
-                    return str(content[0]["text"])
-                else:
-                    return str(content[0])
-            elif isinstance(content, str):
-                return content
-            else:
-                return str(content)
-
-        # Handle other common formats
-        if "text" in data:
-            return str(data["text"])
-        elif "content" in data:
-            content = data["content"]
-            if isinstance(content, str):
-                return content
-            else:
-                return str(content)
-        elif "message" in data:
-            return str(data["message"])
-        elif "response" in data:
-            return str(data["response"])
-        elif "result" in data:
-            return str(data["result"])
-
-    return str(data)
 
 
 def parse_streaming_chunk(chunk: str) -> str:
@@ -206,7 +167,8 @@ def invoke_agent_streaming(
                     line = line[6:]
                     # Parse and clean each chunk
                     parsed_chunk = parse_streaming_chunk(line)
-                    if "Used assistant" in parsed_chunk:
+                    # if "Used assistant" in parsed_chunk:
+                    if "started working" in parsed_chunk or "Handoff" in parsed_chunk or "Using tool" in parsed_chunk: 
                         stripped_str = parsed_chunk.strip()
                         cleaned_str = stripped_str.replace('"', '')
                         st.write(f"{cleaned_str}")
@@ -231,7 +193,8 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-    st.title("NSW Fuel Assistant")
+    with st.chat_message("assistant"):
+        st.write("Hello there! I am here to help you about service stations across the beautiful state of New South Wales! First, please provide me your location in NSW.")
 
     # Chat input
     if prompt := st.chat_input("Type your message here..."):
@@ -247,7 +210,7 @@ def main():
         with st.chat_message(name="assistant"):
             message_placeholder = st.empty()
             chunk_buffer = ""
-            with st.status("AI is thinking...", expanded=True) as status: 
+            with st.status("AI is working...", expanded=True) as status: 
                 try:
                     # Stream the response
                     for chunk in invoke_agent_streaming(
