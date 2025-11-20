@@ -20,7 +20,7 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
     Helper function to convert a location into its latitute and longitude
 
     :param address: NSW address
-    :return: Pydantic model called Coordinates, a named tuple of postcode and latitude and longitude of the input address
+    :return: Pydantic model called Coordinates that contains latitude and longitude of the input address
     """
 
     url = f"https://api.mapbox.com/search/geocode/v6/forward?q={address}&country=AU&limit=1&access_token={mapbox_access_token}"

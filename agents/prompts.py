@@ -64,6 +64,8 @@ For 'fueltype' parameter in any of the tools above, use the following mapping:
 - 'LPG' for LPG
 - 'CNG' for 'CNG/NGV
 - 'EV' for Electric vehicle charge
+
+Finally, don't be verbose. Be complete, but brief in your responses.
 """
 
 
@@ -77,4 +79,6 @@ Tool usage rules (important):
 - Call tools only when necessary; call each tool at most once per user query.
 - After calling a tool, stop and wait for its result before taking further actions.
 - Do not call tools recursively or call an agent that triggers the same toolset.
+
+Finally, don't be verbose. Be complete, but brief in your responses.
 """

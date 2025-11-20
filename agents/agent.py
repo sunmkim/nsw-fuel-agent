@@ -19,12 +19,12 @@ load_dotenv()
 # initialize runtime app
 app = BedrockAgentCoreApp()
 
-# create a liteLLM model for OpenAI's gpt-5-nano
+# create model for OpenAI's gpt-5-nano
 model = OpenAIModel(
     client_args={
         "api_key": os.getenv("OPENAI_API_KEY")
     },
-    model_id="gpt-5"
+    model_id="gpt-5-nano"
 )
 
 # set up tools for our specialized agents
