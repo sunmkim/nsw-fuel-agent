@@ -190,7 +190,10 @@ def main():
 
     # get available agent runtimes
     available_agents = get_agent_runtimes()
-    runtime_arn = available_agents[0]['agentRuntimeArn']
+    for agent in available_agents:
+        if "nsw_service_station_assistant" in agent["agentRuntimeId"]:
+            runtime_arn = available_agents[0]['agentRuntimeArn']
+            break
 
     # Initialize chat history
     if "messages" not in st.session_state:
