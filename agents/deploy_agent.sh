@@ -3,10 +3,10 @@
 # configure and deplpoy
 uv run agentcore configure -e agent.py
 uv run agentcore launch \
-    --env NSW_API_KEY='api-key-here' \
-    --env NSW_AUTH_HEADER='Basic auth-header-key-here' \
-    --env OPENAI_API_KEY='api-key-here' \
-    --env MAPBOX_API_KEY='api-key-here' \
+    --env NSW_API_KEY='<api-key-here>' \
+    --env NSW_AUTH_HEADER='Basic <api-key-here>' \
+    --env OPENAI_API_KEY='<api-key-here>' \
+    --env MAPBOX_API_KEY='<api-key-here>' \
     --env AWS_REGION='us-east-1'
 
 # check deployment status
