@@ -1,19 +1,19 @@
 import os
 from dotenv import load_dotenv
 from bedrock_agentcore_starter_toolkit.operations.memory.manager import MemoryManager
-from bedrock_agentcore.memory.session import MemorySession, MemorySessionManager
+from bedrock_agentcore.memory.session import MemorySession
 
 load_dotenv()
 
 
 def create_memory_resource(memory_name: str, region: str = os.getenv("AWS_REGION")):
-    # create short-term memory resource
+    # create short-term memory resource that will be shared between our subagents
     try:
         memory_manager = MemoryManager(region_name=region)
         print(f"Creating memory '{memory_name}' for short-term conversational storage...")
         memory = memory_manager.get_or_create_memory(
             name=memory_name,
-            description="Fuel assistant memory store",
+            description="Shared memory store between fuel_price_assistant and directions_assistant",
             strategies=[],  # no strategies needed for short-term memory
             event_expiry_days=7,
             memory_execution_role_arn=None
@@ -43,18 +43,14 @@ def create_memory_resource(memory_name: str, region: str = os.getenv("AWS_REGION
 def create_memory_session(
         actor_id: str, 
         session_id: str, 
-        memory_id: str, 
-        region: str = os.getenv("AWS_REGION")
+        memory_session_manager: str, 
     ) -> MemorySession:
-    # initialize session memory manager
-    session_manager = MemorySessionManager(memory_id=memory_id, region_name=region)
-    
+  
     # Create memory session for the specific actor/session combination
-    user_session = session_manager.create_memory_session(
+    memory_session = memory_session_manager.create_memory_session(
         actor_id=actor_id, 
         session_id=session_id
     )
 
-    print(f"Session manager initialized for memory: {memory_id}")
     print(f"✅ Memory session created for actor: {actor_id}, and session: {session_id}")
-    return user_session
+    return memory_session

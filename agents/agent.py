@@ -1,14 +1,17 @@
 import os
 from typing import Tuple, List, Dict
+from datetime import datetime
 from strands import Agent
 from strands.models.openai import OpenAIModel
 from strands.multiagent import Swarm
 from strands.tools.mcp import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from tools import NSWFuelClient, geocode_location
+from bedrock_agentcore.memory.session import MemorySessionManager
 from memory.utils import create_memory_resource, create_memory_session
-from prompts import SYSTEM_PROMPT, FUEL_ASSISTANT_PROMPT, DIRECTIONS_ASSISTANT_PROMPT
+from memory.MemoryHook import MemoryHook
+from tools import NSWFuelClient, geocode_location
+from prompts import FUEL_ASSISTANT_PROMPT, DIRECTIONS_ASSISTANT_PROMPT
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -39,23 +42,33 @@ streamable_http_mcp_client = MCPClient(
     ]}
 )
 
+# set memory and memory session IDs
+MEMORY_NAME = f"swarm_memory"
+FUEL_ACTOR_ID = f"fuel_agent"
+DIRECTIONS_ACTOR_ID = f"directions_agent"
+SESSION_ID = f"swarm_session"
+
 @app.entrypoint
 async def invoke_agent(payload: Dict):
     # create memory manager and user session
-    # memory = create_memory_resource(
-    #     memory_name=MEMORY_NAME
-    # )
-    # user_session = create_memory_session(
-    #     actor_id=ACTOR_ID,
-    #     session_id=SESSION_ID,
-    #     memory_id=memory.id
-    # )
+    memory = create_memory_resource(
+        memory_name=MEMORY_NAME
+    )
+
+    session_manager = MemorySessionManager(memory_id=memory.id, region_name=os.getenv("AWS_REGION"))
+
+    # use same session id for different agents to share memory
+    fuel_assistant_memory_session = create_memory_session(
+        actor_id=FUEL_ACTOR_ID,
+        session_id=SESSION_ID,
+        memory_session_manager=session_manager
+    )
 
     # get user input prompt
     user_input = payload.get("prompt")
     print(f"User query: '{user_input}'")
 
-    # Create specialized agents
+    # Create specialized agents (with shared memory using same session id)
     fuel_agent = Agent(
         name="fuel_agent",
         description="Agent to get fuel prices for a given location or fuel station",
@@ -66,10 +79,17 @@ async def invoke_agent(payload: Dict):
             fuel_tools.get_prices_for_location, 
             fuel_tools.get_nearby_prices, 
             fuel_tools.get_price_at_station
-        ]
+        ],
+        hooks=[MemoryHook(SESSION_ID, fuel_assistant_memory_session)],
+        state={"actor_id": FUEL_ACTOR_ID, "session_id": SESSION_ID}
     )
 
     with streamable_http_mcp_client:
+        directions_assistant_memory_session = create_memory_session(
+            actor_id=DIRECTIONS_ACTOR_ID,
+            session_id=SESSION_ID,
+            memory_session_manager=session_manager
+        )
         mapbox_tools = streamable_http_mcp_client.list_tools_sync()
             
         # Create the directions agent with tools from Mapbox MCP server
@@ -79,6 +99,8 @@ async def invoke_agent(payload: Dict):
             model=model,
             system_prompt=DIRECTIONS_ASSISTANT_PROMPT,
             tools=[mapbox_tools, geocode_location],
+            hooks=[MemoryHook(SESSION_ID, directions_assistant_memory_session)],
+            state={"actor_id": DIRECTIONS_ACTOR_ID, "session_id": SESSION_ID}
         )
 
         # create agent swarm

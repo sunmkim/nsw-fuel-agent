@@ -12,6 +12,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+NSW_API_BASE_URL="https://api.onegov.nsw.gov.au"
 
 @tool
 def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_API_KEY")) -> Tuple[str, List[float]]:
@@ -42,7 +43,7 @@ def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_
 
 class NSWFuelClient():
     def __init__(self):
-        self.base_url = os.getenv("NSW_API_BASE_URL")
+        self.base_url = NSW_API_BASE_URL
         self.fuel_api_token = self._get_access_token()
 
     def get(self, url: str, headers: Dict = None, params: Dict = None, data: Dict = None):

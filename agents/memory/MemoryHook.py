@@ -14,8 +14,7 @@ class MemoryHook(HookProvider):
     1. Loads most recent conversation (via AgentInitializedEvent)
     2. Stores the last message (via the session manager)
     """
-    def __init__(self, actor_id: str, session_id: str, memory_session: MemorySession):
-        self.actor_id = actor_id
+    def __init__(self, session_id: str, memory_session: MemorySession):
         self.session_id = session_id
         self.memory_session = memory_session
     
