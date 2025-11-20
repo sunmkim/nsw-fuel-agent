@@ -136,30 +136,33 @@ def get_agent_runtimes(region: str = "us-east-1") -> List[Dict]:
 
 def invoke_agent_streaming(
     prompt: str,
-    # agent_arn: str,
+    agent_arn: str,
     region: str = "us-east-1"
 ) -> Iterator[str]:
     """Invoke agent and yield streaming response chunks"""
     try:
-        # agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
+        # header = {
+        #     "Content-Type": "application/json"
+        # }
+        # body = {
+        #     "prompt": prompt
+        # }
+        # URL = "http://localhost:8080/invocations"
+        # response = requests.post(url=URL, json=body, headers=header, stream=True)
+        
+        agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
 
         logger.info("Using streaming response path")
-        header = {
-            "Content-Type": "application/json"
-        }
-        body = {
-            "prompt": prompt
-        }
-        URL = "http://localhost:8080/invocations"
-        response = requests.post(url=URL, json=body, headers=header, stream=True)
+       
         # invoke agent hosted on AWS
-        # response = agentcore_client.invoke_agent_runtime(
-        #     agentRuntimeArn=agent_arn,
-        #     payload=json.dumps({"prompt": prompt}),
-        # )
+        response = agentcore_client.invoke_agent_runtime(
+            agentRuntimeArn=agent_arn,
+            payload=json.dumps({"prompt": prompt}),
+        )
 
-        # for line in response["response"].iter_lines(chunk_size=1):
-        for line in response.iter_lines(chunk_size=1):
+        # for line in response.iter_lines(chunk_size=1):
+        
+        for line in response["response"].iter_lines(chunk_size=1):
             if line:
                 line = line.decode("utf-8")
                 # logger.info(f"Raw line: {line}")
@@ -186,8 +189,8 @@ def invoke_agent_streaming(
 def main():
 
     # get available agent runtimes
-    # available_agents = get_agent_runtimes()
-    # runtime_arn = available_agents[0]['agentRuntimeArn']
+    available_agents = get_agent_runtimes()
+    runtime_arn = available_agents[0]['agentRuntimeArn']
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -215,7 +218,7 @@ def main():
                     # Stream the response
                     for chunk in invoke_agent_streaming(
                         prompt,
-                        # runtime_arn
+                        runtime_arn
                     ):
                         # Let's see what we get
                         logger.debug(f"MAIN LOOP: chunk type: {type(chunk)}")
