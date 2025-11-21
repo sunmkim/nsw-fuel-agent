@@ -1,5 +1,11 @@
 # Fuel Agent for New South Wales
 
+You can access the app at: https://nsw-fuel-agent-smk1.streamlit.app/.
+
+A screenshot of the chat bot with agents/tools used can be found below:
+
+![Chat Image](images/screenshot.png)
+
 ## About
 This is an agent that gives information on live fuel pricing from service stations across the state of New South Wales (NSW) in Australia.
 The agent utilizes [Fuel API](https://api.nsw.gov.au/Product/Index/22) published by NSW Department of Customer Service.
@@ -17,6 +23,8 @@ The agent utilizes [Fuel API](https://api.nsw.gov.au/Product/Index/22) published
 Current architecture
 
 ![AWS Architecture](images/diagram.png "Swarm architecture on AWS Bedrock Agentcore")
+
+The current state of this multi-agent system uses a swarm of agents, Mapbox MCP server, shared Agentcore Memory between agents, and deployed via Agentcore Runtie.
 
 ### Swarm
 This is a multi-agent system that utilizes the swarm collaboration pattern. The swarm pattern uses a group of agents that work together on some task while exchanging information/state between them directly and iteratively. There is no central orchestrator and is a decentralized pattern.
