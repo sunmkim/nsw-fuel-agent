@@ -51,6 +51,7 @@ if _bg_b64:
 else:
     # Fallback: no background image found
     st.info("Background image not found at 'static/favicon.png'.")
+    print("No background image")
 
 # Page config
 st.set_page_config(
