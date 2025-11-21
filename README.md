@@ -24,7 +24,7 @@ Current architecture
 
 ![AWS Architecture](images/diagram.png "Swarm architecture on AWS Bedrock Agentcore")
 
-The current state of this multi-agent system uses a swarm of agents, Mapbox MCP server, shared Agentcore Memory between agents, and deployed via Agentcore Runtie.
+The current state of this multi-agent system uses a swarm of agents, Mapbox MCP server, shared Agentcore Memory between agents, and deployed via Agentcore Runtime.
 
 ### Swarm
 This is a multi-agent system that utilizes the swarm collaboration pattern. The swarm pattern uses a group of agents that work together on some task while exchanging information/state between them directly and iteratively. There is no central orchestrator and is a decentralized pattern.
