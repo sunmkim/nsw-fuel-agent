@@ -35,3 +35,6 @@ I initially tried implementing this as an "agents-as-tools" pattern (see `agent-
 In this pattern, there is a primary "orchestrator" agent that calls more specialized agents, which are domain-specific to various tasks. For this project, I have a main orchestrator agent that calls upon `fuel_price_assistant` and `directions_assistant` as tools. 
 
 Ultimately, I decided on swarm because I found it to perform much faster than the agent-as-tool pattern. This is most likely due to it not having a centralized orchestrator agent that has to process the results coming in and out of the specialized agents.
+
+## Agent Evaluations
+You can find the evluations for agents used in this project in `workflow-refactor` branch. The evalations are in the `evals` directory of that branch.
