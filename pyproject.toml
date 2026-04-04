@@ -4,11 +4,26 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "strands-agents-tools>=0.2.0",
-    "bedrock-agentcore-starter-toolkit>=0.1.33",
-    "mcp[cli]>=1.25.0",
-    "strands-agents[openai]>=1.16.0",
-    "pandas>=2.3.3",
-    "strands-agents-evals>=0.1.13",
-]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64"]
+
+[tool.pixi.dependencies]
+python = ">=3.13,<3.14"
+uv = "*"   # mcp[cli] invokes uv internally to launch MCP servers
+
+[tool.pixi.pypi-dependencies]
+strands-agents-tools = ">=0.2.0"
+bedrock-agentcore-starter-toolkit = ">=0.1.33"
+mcp = {version = ">=1.25.0", extras = ["cli"]}
+strands-agents = {version = ">=1.16.0", extras = ["openai"]}
+pandas = ">=2.3.3"
+strands-agents-evals = ">=0.1.13"
+
+[tool.pixi.tasks]
+configure = "agentcore configure -e agent.py"
+launch = "agentcore launch --env NSW_API_KEY=$NSW_API_KEY --env NSW_AUTH_HEADER=$NSW_AUTH_HEADER --env OPENAI_API_KEY=$OPENAI_API_KEY --env MAPBOX_API_KEY=$MAPBOX_API_KEY --env AWS_REGION=${AWS_REGION:-us-east-1}"
+status = "agentcore status"
+invoke = "agentcore invoke '{\"prompt\": \"Hello. What can you do?\"}'"
+evals = "python evals/eval.py"
