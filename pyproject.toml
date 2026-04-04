@@ -10,4 +10,5 @@ dependencies = [
     "mcp[cli]>=1.25.0",
     "strands-agents[openai]>=1.16.0",
     "pandas>=2.3.3",
+    "strands-agents-evals>=0.1.13",
 ]

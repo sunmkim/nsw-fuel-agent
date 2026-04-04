@@ -944,6 +944,7 @@ dependencies = [
     { name = "mcp", extra = ["cli"] },
     { name = "pandas" },
     { name = "strands-agents", extra = ["openai"] },
+    { name = "strands-agents-evals" },
     { name = "strands-agents-tools" },
 ]
 
@@ -953,6 +954,7 @@ requires-dist = [
     { name = "mcp", extras = ["cli"], specifier = ">=1.25.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "strands-agents", extras = ["openai"], specifier = ">=1.16.0" },
+    { name = "strands-agents-evals", specifier = ">=0.1.13" },
     { name = "strands-agents-tools", specifier = ">=0.2.0" },
 ]
 
@@ -1839,6 +1841,27 @@ wheels = [
 [package.optional-dependencies]
 openai = [
     { name = "openai" },
+]
+
+[[package]]
+name = "strands-agents-evals"
+version = "0.1.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation-threading" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "strands-agents" },
+    { name = "strands-agents-tools" },
+    { name = "tenacity" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/50/09d306be4db19c2094d368c99302aa630c169cf6ea137d0c1ae6e9b4036f/strands_agents_evals-0.1.13.tar.gz", hash = "sha256:d33d0c284e9571f73b6414e9aa589979b5c316cba6e2f7132ac6afa96fec077d", size = 192900, upload-time = "2026-03-31T20:09:52.454Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/e6/4823f9d282e97a8cb649b8c16bbf81231d3283a6297cb960402855fa347f/strands_agents_evals-0.1.13-py3-none-any.whl", hash = "sha256:a4ae7c323d8528dbb8f97728fdc62c45c6f29f6e10929602953a6443cf54dc08", size = 155049, upload-time = "2026-03-31T20:09:50.753Z" },
 ]
 
 [[package]]
