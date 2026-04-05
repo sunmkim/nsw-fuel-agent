@@ -23,7 +23,7 @@ app = BedrockAgentCoreApp()
 # unique per microVM instance — stable across multi-turn messages, isolated between sessions
 SESSION_ID = str(uuid.uuid4())
 
-# create model for OpenAI's gpt-5-nano
+# create model for OpenAI GPT model
 model = OpenAIModel(
     client_args={
         "api_key": os.getenv("OPENAI_API_KEY")
