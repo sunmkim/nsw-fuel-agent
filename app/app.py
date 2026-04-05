@@ -131,28 +131,27 @@ def invoke_agent_streaming(
 ) -> Iterator[str]:
     """Invoke agent and yield streaming response chunks"""
     try:
-        header = {
-            "Content-Type": "application/json"
-        }
-        body = {
-            "prompt": prompt
-        }
-        URL = "http://localhost:8080/invocations"
-        response = requests.post(url=URL, json=body, headers=header, stream=True)
+        # header = {
+        #     "Content-Type": "application/json"
+        # }
+        # body = {
+        #     "prompt": prompt
+        # }
+        # URL = "http://localhost:8080/invocations"
+        # response = requests.post(url=URL, json=body, headers=header, stream=True)
         
-        # agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
+        agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
 
-        # logger.info("Using streaming response path")
+        logger.info("Using streaming response path")
        
-        # # invoke agent hosted on AWS
-        # response = agentcore_client.invoke_agent_runtime(
-        #     agentRuntimeArn=agent_arn,
-        #     payload=json.dumps({"prompt": prompt, "session_id": session_id}),
-        # )
+        # invoke agent hosted on AWS
+        response = agentcore_client.invoke_agent_runtime(
+            agentRuntimeArn=agent_arn,
+            payload=json.dumps({"prompt": prompt, "session_id": session_id}),
+        )
 
-        for line in response.iter_lines(chunk_size=1):
-        
-        # for line in response["response"].iter_lines(chunk_size=1):
+        # for line in response.iter_lines(chunk_size=1):
+        for line in response["response"].iter_lines(chunk_size=1):
             if line:
                 line = line.decode("utf-8")
                 # logger.info(f"Raw line: {line}")
