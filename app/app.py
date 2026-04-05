@@ -13,45 +13,26 @@ from streamlit.logger import get_logger
 logger = get_logger(__name__)
 logger.setLevel("INFO")
 
+WELCOME_MESSAGE = """
+Hello there! I am here to help you about service stations across the beautiful state of New South Wales (NSW)! 
+I can get you information on fuel types and prices available for each fuel station, and can give you the directions to get there!
 
-def _get_base64_image(image_path: str) -> str:
-    """Return base64-encoded string for the given image file."""
-    try:
-        with open(image_path, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode()
-        return encoded
-    except FileNotFoundError:
-        return ""
+You can ask about following fuel types:
+- Ethanol 94 (E10)
+- Unleaded 91 (U91)
+- Ethanol 105 (E85)
+- Premium 95 (P95)
+- Premium 98 (P98)
+- Diesel (DL)
+- Premium Diesel (PDL)
+- Biodiesel 20 (B20)
+- LPG (LPG)
+- CNG/NGV (CNG)
+- Electric vehicle charge (EV)
 
+First, please provide me your location in NSW so that I may assist you.
+"""
 
-_bg_b64 = _get_base64_image(os.path.join("static", "favicon.png"))
-if _bg_b64:
-    page_bg_img = f"""
-    <style>
-    [data-testid="stAppViewContainer"] {{
-        position: relative;
-        z-index: 0;
-    }}
-    [data-testid="stAppViewContainer"]::before {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        background-image: url("data:image/png;base64,{_bg_b64}");
-        background-position: center top 130px;
-        background-size: 30%;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
-        opacity: 0.18;
-        z-index: -1;
-        pointer-events: none;
-    }}
-    </style>
-    """
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-else:
-    # Fallback: no background image found
-    st.info("Background image not found at 'static/favicon.png'.")
-    print("No background image")
 
 # Page config
 st.set_page_config(
@@ -207,7 +188,7 @@ def main():
         st.session_state.messages = []
     
     with st.chat_message("assistant"):
-        st.write("Hello there! I am here to help you about service stations across the beautiful state of New South Wales! First, please provide me your location in NSW.")
+        st.write(WELCOME_MESSAGE)
 
     # Chat input
     if prompt := st.chat_input("Type your message here..."):

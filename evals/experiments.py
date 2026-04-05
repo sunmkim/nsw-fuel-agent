@@ -11,9 +11,20 @@ from strands_evals.evaluators import (
     ToolSelectionAccuracyEvaluator,
     ToolParameterAccuracyEvaluator,
 )
-from cases import LOCATION_CASES, FUEL_CASES, DIRECTIONS_CASES
+from cases import CLARIFICATION_CASES, LOCATION_CASES, FUEL_CASES, DIRECTIONS_CASES
 
 # ── Experiments ───────────────────────────────────────────────────────────────
+
+# Verifies that the agent asks for location instead of calling tools
+# when the user query contains no location information.
+CLARIFICATION_EXPERIMENT = Experiment(
+    cases=CLARIFICATION_CASES,
+    evaluators=[
+        HelpfulnessEvaluator(),
+        GoalSuccessRateEvaluator(),
+        ToolSelectionAccuracyEvaluator(),  # expected_tools is [] — confirms no tools fired
+    ]
+)
 
 LOCATION_EXPERIMENT = Experiment(
     cases=LOCATION_CASES,
@@ -40,11 +51,14 @@ FUEL_EXPERIMENT = Experiment(
     ]
 )
 
+# directions_tool is called with geocoded coordinates, so ToolParameterAccuracyEvaluator
+# validates that geocode_location was invoked with the right addresses before directions_tool.
 DIRECTIONS_EXPERIMENT = Experiment(
     cases=DIRECTIONS_CASES,
     evaluators=[
         HelpfulnessEvaluator(),
         GoalSuccessRateEvaluator(),
         ToolSelectionAccuracyEvaluator(),
+        ToolParameterAccuracyEvaluator(),
     ]
 )
