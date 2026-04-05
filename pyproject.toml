@@ -24,5 +24,6 @@ httpx = ">=0.28.0"
 
 [tool.pixi.tasks]
 agent = "python agents/agent.py"
+ui = "streamlit run app/app.py"
 evals = "python evals/eval.py"
 invoke = "agentcore invoke '{\"prompt\": \"Hello. What can you do for me?\"}'"

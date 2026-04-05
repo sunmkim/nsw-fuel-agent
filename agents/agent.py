@@ -20,7 +20,7 @@ MODEL_ID = "gpt-5.4-mini"
 # initialize runtime app
 app = BedrockAgentCoreApp()
 
-# unique per microVM instance — stable across multi-turn messages, isolated between sessions
+# random generateor for session_id
 SESSION_ID = str(uuid.uuid4())
 
 # create model for OpenAI GPT model
@@ -38,9 +38,9 @@ fuel_tools = NSWFuelClient()
 
 @app.entrypoint
 async def invoke_agent(payload: Dict):
-    memory_name = "nsw_fuel_agent_memory" 
+    memory_name = "nsw_fuel_agent_memory"
     actor_id = "nsw_fuel_agent"
-    session_id = SESSION_ID
+    session_id = payload.get("session_id", SESSION_ID) # get session_id from front-end. fallback to generated SESSION_ID for local testing
 
     # get or create memory resource by name
     memory_resource = create_memory_resource(memory_name=memory_name)

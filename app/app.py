@@ -3,7 +3,7 @@ import os
 import re
 import requests
 import time
-import base64
+import uuid
 from typing import Dict, Iterator, List
 
 import boto3
@@ -126,32 +126,33 @@ def get_agent_runtimes(region: str = "us-east-1") -> List[Dict]:
 def invoke_agent_streaming(
     prompt: str,
     agent_arn: str,
+    session_id: str,
     region: str = "us-east-1"
 ) -> Iterator[str]:
     """Invoke agent and yield streaming response chunks"""
     try:
-        # header = {
-        #     "Content-Type": "application/json"
-        # }
-        # body = {
-        #     "prompt": prompt
-        # }
-        # URL = "http://localhost:8080/invocations"
-        # response = requests.post(url=URL, json=body, headers=header, stream=True)
+        header = {
+            "Content-Type": "application/json"
+        }
+        body = {
+            "prompt": prompt
+        }
+        URL = "http://localhost:8080/invocations"
+        response = requests.post(url=URL, json=body, headers=header, stream=True)
         
-        agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
+        # agentcore_client = boto3.client("bedrock-agentcore", region_name=region)
 
-        logger.info("Using streaming response path")
+        # logger.info("Using streaming response path")
        
-        # invoke agent hosted on AWS
-        response = agentcore_client.invoke_agent_runtime(
-            agentRuntimeArn=agent_arn,
-            payload=json.dumps({"prompt": prompt}),
-        )
+        # # invoke agent hosted on AWS
+        # response = agentcore_client.invoke_agent_runtime(
+        #     agentRuntimeArn=agent_arn,
+        #     payload=json.dumps({"prompt": prompt, "session_id": session_id}),
+        # )
 
-        # for line in response.iter_lines(chunk_size=1):
+        for line in response.iter_lines(chunk_size=1):
         
-        for line in response["response"].iter_lines(chunk_size=1):
+        # for line in response["response"].iter_lines(chunk_size=1):
             if line:
                 line = line.decode("utf-8")
                 # logger.info(f"Raw line: {line}")
@@ -190,12 +191,19 @@ def main():
         st.error("No suitable agent runtime found. Please check agent deployment.")
         return
 
-    # Initialize chat history
+    # Initialize chat history and stable session ID
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(uuid.uuid4())
     
     with st.chat_message("assistant"):
         st.write(WELCOME_MESSAGE)
+
+    # Replay chat history on each rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
     # Chat input
     if prompt := st.chat_input("Type your message here..."):
@@ -216,7 +224,8 @@ def main():
                     # Stream the response
                     for chunk in invoke_agent_streaming(
                         prompt,
-                        runtime_arn
+                        runtime_arn,
+                        session_id=st.session_state.session_id
                     ):
                         # Let's see what we get
                         logger.debug(f"MAIN LOOP: chunk type: {type(chunk)}")
