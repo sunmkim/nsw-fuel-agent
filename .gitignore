@@ -210,3 +210,5 @@ __marimo__/
 **/.terraform.*
 **/.dockerignore
 **/.bedrock_agentcore*
+*.tfstate
+*.backup
