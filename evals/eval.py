@@ -20,6 +20,7 @@ from experiments import (
     CLARIFICATION_EXPERIMENT,
     LOCATION_EXPERIMENT,
     FUEL_EXPERIMENT,
+    STATION_LOOKUP_EXPERIMENT,
     DIRECTIONS_EXPERIMENT,
 )
 
@@ -31,8 +32,6 @@ MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 # Spans are cleared before each case so results don't bleed across runs.
 telemetry = StrandsEvalsTelemetry().setup_in_memory_exporter()
 mapper = StrandsInMemorySessionMapper()
-
-fuel_tools = NSWFuelClient()
 
 
 def _build_session(case_name: str):
@@ -47,7 +46,14 @@ def _build_session(case_name: str):
 # evaluators have the Session they require.
 
 
-def run_fuel_case(case: Case) -> dict:
+def run_standard_case(case: Case) -> dict:
+    """
+    Task function for CLARIFICATION, LOCATION, FUEL, and STATION_LOOKUP experiments.
+    Builds an agent without Mapbox tools — these experiments never call directions_tool.
+    Keeping directions_tool out of the tool list ensures ToolSelectionAccuracyEvaluator
+    results are not polluted by an extra available-but-unused tool (especially important
+    for CLARIFICATION cases where expected_tools=[]).
+    """
     telemetry.in_memory_exporter.clear()
     client = NSWFuelClient()
     agent = Agent(
@@ -66,6 +72,29 @@ def run_fuel_case(case: Case) -> dict:
 
 
 if __name__ == "__main__":
+
+    # ── Experiments that do NOT need Mapbox MCP ────────────────────────────
+    clarification_reports = CLARIFICATION_EXPERIMENT.run_evaluations(run_standard_case)
+    print("=== Clarification Evaluation Results ===")
+    clarification_reports[0].run_display()
+    CLARIFICATION_EXPERIMENT.to_file("clarification_evaluation")
+
+    location_reports = LOCATION_EXPERIMENT.run_evaluations(run_standard_case)
+    print("=== Location Evaluation Results ===")
+    location_reports[0].run_display()
+    LOCATION_EXPERIMENT.to_file("location_evaluation")
+
+    fuel_reports = FUEL_EXPERIMENT.run_evaluations(run_standard_case)
+    print("=== Fuel Evaluation Results ===")
+    fuel_reports[0].run_display()
+    FUEL_EXPERIMENT.to_file("fuel_evaluation")
+
+    station_reports = STATION_LOOKUP_EXPERIMENT.run_evaluations(run_standard_case)
+    print("=== Station Lookup Evaluation Results ===")
+    station_reports[0].run_display()
+    STATION_LOOKUP_EXPERIMENT.to_file("station_lookup_evaluation")
+
+    # ── Experiments that require Mapbox MCP ───────────────────────────────
     mapbox_mcp_client = MCPClient(
         lambda: streamable_http_client(
             url="https://mcp.mapbox.com/mcp",
@@ -78,8 +107,13 @@ if __name__ == "__main__":
 
     with mapbox_mcp_client:
         mapbox_tools = mapbox_mcp_client.list_tools_sync()
+        fuel_tools = NSWFuelClient()
 
-        def run_cases(case: Case) -> dict:
+        def run_mapbox_case(case: Case) -> dict:
+            """
+            Task function for DIRECTIONS experiment.
+            Includes directions_tool from Mapbox MCP alongside all fuel tools.
+            """
             telemetry.in_memory_exporter.clear()
             agent = Agent(
                 system_prompt=SYSTEM_PROMPT,
@@ -96,26 +130,7 @@ if __name__ == "__main__":
             response = agent(case.input)
             return {"output": str(response), "trajectory": _build_session(case.name)}
 
-        # Run clarification experiment
-        # clarification_reports = CLARIFICATION_EXPERIMENT.run_evaluations(run_cases)
-        # print("=== Clarification Evaluation Results ===")
-        # clarification_reports[0].run_display()
-        # CLARIFICATION_EXPERIMENT.to_file("clarification_evaluation")
-
-        # Run location experiment
-        # location_reports = LOCATION_EXPERIMENT.run_evaluations(run_cases)
-        # print("=== Location Evaluation Results ===")
-        # location_reports[0].run_display()
-        # LOCATION_EXPERIMENT.to_file("location_evaluation")
-
-        # Run fuel experiment
-        # fuel_reports = FUEL_EXPERIMENT.run_evaluations(run_cases)
-        # print("=== Fuel Evaluation Results ===")
-        # fuel_reports[0].run_display()
-        # FUEL_EXPERIMENT.to_file("fuel_evaluation")
-
-        # Run directions experiment
-        directions_reports = DIRECTIONS_EXPERIMENT.run_evaluations(run_cases)
+        directions_reports = DIRECTIONS_EXPERIMENT.run_evaluations(run_mapbox_case)
         print("=== Directions Evaluation Results ===")
         directions_reports[0].run_display()
         DIRECTIONS_EXPERIMENT.to_file("directions_evaluation")

@@ -13,6 +13,31 @@ from models import Coordinates
 
 CLARIFICATION_CASES: List[Case] = [
     Case(
+        name="clarification-with-location-01",
+        input="Get me P98 prices near me. I'm in Newtown, Sydney.",
+        metadata={
+            "category": "clarification",
+            "subcategory": "location-in-followup",
+            "difficulty": "medium",
+            "tags": ["p98", "newtown", "location-in-query"],
+            "goal": (
+                "The query contains 'near me' but immediately provides the location "
+                "('Newtown, Sydney') in the same message. Agent should recognise the "
+                "location is present and proceed directly to geocoding and fuel lookup "
+                "without asking for clarification."
+            ),
+            "expected_tools": ["geocode_location", "get_prices_for_location"],
+            "expected_tool_params": {
+                "geocode_location": {
+                    "address": "Newtown Sydney NSW"
+                },
+                "get_prices_for_location": {
+                    "fueltype": "P98"
+                }
+            }
+        }
+    ),
+    Case(
         name="clarification-missing-location-01",
         input="Get prices for Unleaded 91 fuel near me",
         metadata={
@@ -250,6 +275,56 @@ FUEL_CASES: List[Case] = [
         }
     ),
     Case(
+        name="fuel-no-results-01",
+        input="Find E85 stations within 2km of Broken Hill NSW",
+        metadata={
+            "category": "fuel",
+            "subcategory": "no-results",
+            "difficulty": "hard",
+            "tags": ["e85", "no-results", "edge-case", "remote-location"],
+            "goal": (
+                "Agent must attempt a fuel lookup and respond gracefully when no stations "
+                "are found — it should not hallucinate stations, and should explain that "
+                "no E85 results were available in that area."
+            ),
+            "expected_tools": ["geocode_location", "get_nearby_prices"],
+            "expected_tool_params": {
+                "geocode_location": {
+                    "address": "Broken Hill NSW"
+                },
+                "get_nearby_prices": {
+                    "fueltype": "E85",
+                    "radius": 2
+                }
+            }
+        }
+    ),
+    Case(
+        name="fuel-invalid-type-01",
+        input="Find Jet-A1 aviation fuel near Sydney Airport 2020",
+        metadata={
+            "category": "fuel",
+            "subcategory": "invalid-input",
+            "difficulty": "hard",
+            "tags": ["invalid-fuel-type", "edge-case", "error-handling"],
+            "goal": (
+                "Agent must recognise that Jet-A1 is not one of the 11 supported fuel types "
+                "and respond by explaining the supported types rather than calling tools "
+                "with an invalid fueltype parameter."
+            ),
+            "expected_tools": [],
+            "expected_tool_params": {}
+        }
+    ),
+]
+
+# ── Station Lookup Cases ──────────────────────────────────────────────────────
+# Direct lookups by station code — no geocoding needed.
+# Kept separate from FUEL_CASES so FUEL_EXPERIMENT can apply
+# ToolCalled("geocode_location") without false failures on these cases.
+
+STATION_LOOKUP_CASES: List[Case] = [
+    Case(
         name="fuel-station-01",
         input="What fuel prices are available at station 20594?",
         metadata={
@@ -258,6 +333,27 @@ FUEL_CASES: List[Case] = [
             "difficulty": "easy",
             "tags": ["station-lookup", "direct-lookup"],
             "goal": "Return all current fuel prices for station code 20594",
+            "expected_tools": ["get_price_at_station"],
+            "expected_tool_params": {
+                "get_price_at_station": {
+                    "station_code": "20594"
+                }
+            }
+        }
+    ),
+    Case(
+        name="fuel-station-no-type-01",
+        input="What is the LPG price at station 20594?",
+        metadata={
+            "category": "fuel",
+            "subcategory": "station-price",
+            "difficulty": "medium",
+            "tags": ["lpg", "station-lookup", "unavailable-type", "edge-case"],
+            "goal": (
+                "Agent must call get_price_at_station for station 20594 and report that "
+                "LPG is not available at that station if the returned price list does not "
+                "include LPG. Must not hallucinate an LPG price."
+            ),
             "expected_tools": ["get_price_at_station"],
             "expected_tool_params": {
                 "get_price_at_station": {
@@ -334,6 +430,42 @@ DIRECTIONS_CASES: list[Case] = [
                 "directions_tool": {
                     "origin": "351 Windsor Rd, Baulkham Hills NSW 2153",
                     "destination": "64 North Rocks Rd, North Rocks NSW 2151"
+                }
+            }
+        }
+    ),
+    Case(
+        name="fuel-directions-combined-01",
+        input=(
+            "Find the cheapest Unleaded 91 station near Chatswood 2067 "
+            "and give me driving directions there from 120 Pacific Hwy, St Leonards NSW 2065"
+        ),
+        metadata={
+            "category": "directions",
+            "subcategory": "fuel-and-directions",
+            "difficulty": "hard",
+            "tags": ["u91", "chatswood", "combined-query", "directions", "multi-tool"],
+            "goal": (
+                "Agent must: (1) geocode Chatswood to find U91 prices, "
+                "(2) identify the cheapest station, (3) geocode the user's starting location, "
+                "and (4) provide driving directions from St Leonards to the cheapest station. "
+                "All three tool types should be used."
+            ),
+            "expected_tools": [
+                "geocode_location",
+                "get_prices_for_location",
+                "directions_tool",
+            ],
+            "expected_tool_params": {
+                "geocode_location": {
+                    "address": "Chatswood NSW 2067"
+                },
+                "get_prices_for_location": {
+                    "postcode": "2067",
+                    "fueltype": "U91"
+                },
+                "directions_tool": {
+                    "origin": "120 Pacific Hwy, St Leonards NSW 2065"
                 }
             }
         }
