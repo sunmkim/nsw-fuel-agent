@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 # Agentcore memory resource
-resource "aws_bedrockagentcore_memory" "swarm_memory" {
-  name                  = "swarm_memory"
+resource "aws_bedrockagentcore_memory" "nsw_fuel_agent_memory" {
+  name                  = "nsw_fuel_agent_memory"
   event_expiry_duration = 7
 }

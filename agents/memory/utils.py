@@ -55,13 +55,9 @@ def create_memory_session(
     print(f"✅ Memory session created for actor: {actor_id}, and session: {session_id}")
     return memory_session
 
-def setup_memory(memory_name: str, actor_id: str, session_id: str) -> MemorySession:
-    # create memory manager and user session
-    memory = create_memory_resource(
-        memory_name=memory_name
-    )
 
-    session_manager = MemorySessionManager(memory_id=memory.id, region_name=os.getenv("AWS_REGION"))
+def setup_memory(memory_id: str, actor_id: str, session_id: str) -> MemorySession:
+    session_manager = MemorySessionManager(memory_id=memory_id, region_name=os.getenv("AWS_REGION"))
 
     # use same session id for different agents to share memory
     assistant_memory_session = create_memory_session(

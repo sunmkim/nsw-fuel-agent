@@ -25,5 +25,7 @@ strands-agents-evals = ">=0.1.13"
 configure = "agentcore configure -e agent.py"
 launch = "agentcore launch --env NSW_API_KEY=$NSW_API_KEY --env NSW_AUTH_HEADER=$NSW_AUTH_HEADER --env OPENAI_API_KEY=$OPENAI_API_KEY --env MAPBOX_API_KEY=$MAPBOX_API_KEY --env AWS_REGION=${AWS_REGION:-us-east-1}"
 status = "agentcore status"
-invoke = "agentcore invoke '{\"prompt\": \"Hello. What can you do?\"}'"
+
+agent = "python agents/agent.py"
+invoke = "curl -X POST http://localhost:8080/invocations -H 'Content-Type: application/json' -d '{\"prompt\": \"I am at 351 Windsor Rd, Baulkham Hills NSW 2153, Australia? What is the closest service station near me with Diesel fuel?\"}'"
 evals = "python evals/eval.py"
