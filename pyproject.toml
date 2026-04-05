@@ -23,10 +23,6 @@ strands-agents-evals = ">=0.1.13"
 httpx = ">=0.28.0"
 
 [tool.pixi.tasks]
-configure = "agentcore configure -e agents/agent.py"
-launch = "agentcore launch --env \"NSW_API_KEY=$NSW_API_KEY\" --env \"NSW_AUTH_HEADER=$NSW_AUTH_HEADER\" --env \"OPENAI_API_KEY=$OPENAI_API_KEY\" --env \"MAPBOX_API_KEY=$MAPBOX_API_KEY\" --env \"AWS_REGION=us-east-1\""
-status = "agentcore status"
-
 agent = "python agents/agent.py"
 evals = "python evals/eval.py"
 invoke = "agentcore invoke '{\"prompt\": \"Hello. What can you do for me?\"}'"

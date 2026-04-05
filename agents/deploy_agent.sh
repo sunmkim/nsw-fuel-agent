@@ -1,11 +1,14 @@
-# we will use agentcore starter toolkit to deploy our agent
+# load environment variables
+source .env
 
 # configure and deploy
-pixi run configure
-pixi run launch
+# agentcore configure -e agents/agent.py
+
+# launch
+agentcore launch --env NSW_API_KEY=$NSW_API_KEY --env NSW_AUTH_HEADER=$NSW_AUTH_HEADER --env OPENAI_API_KEY=$OPENAI_API_KEY --env MAPBOX_API_KEY=$MAPBOX_API_KEY --env AWS_REGION=us-east-1
 
 # check deployment status
-pixi run status
+agentcore status
 
 # test deployment
 pixi run invoke
