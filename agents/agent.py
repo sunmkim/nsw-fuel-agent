@@ -1,4 +1,5 @@
 import os
+import uuid
 import httpx
 from typing import Dict
 from strands import Agent
@@ -19,6 +20,9 @@ MODEL_ID = "gpt-5.4-mini"
 # initialize runtime app
 app = BedrockAgentCoreApp()
 
+# unique per microVM instance — stable across multi-turn messages, isolated between sessions
+SESSION_ID = str(uuid.uuid4())
+
 # create model for OpenAI's gpt-5-nano
 model = OpenAIModel(
     client_args={
@@ -34,9 +38,9 @@ fuel_tools = NSWFuelClient()
 
 @app.entrypoint
 async def invoke_agent(payload: Dict):
-    memory_name = "nsw_fuel_agent_memory"
-    actor_id = "agent-id"
-    session_id = "3c9813ad-31ce-4ada-9878-7298d7181f62"
+    memory_name = "nsw_fuel_agent_memory" 
+    actor_id = "nsw_fuel_agent"
+    session_id = SESSION_ID
 
     # get or create memory resource by name
     memory_resource = create_memory_resource(memory_name=memory_name)

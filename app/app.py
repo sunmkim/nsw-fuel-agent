@@ -30,6 +30,13 @@ You can ask about following fuel types:
 - CNG/NGV (CNG)
 - Electric vehicle charge (EV)
 
+Here are some sample locations you can use to get started:
+- Bennelong Point, Sydney NSW 2000
+- 159-175 Church St, Parramatta NSW 2150
+- 107 Maitland Rd, Mayfield NSW 2304
+- 200 Crown St, Wollongong NSW 2500
+- 102 Jonson St, Byron Bay NSW 2481
+
 First, please provide me your location in NSW so that I may assist you.
 """
 
