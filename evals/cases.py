@@ -2,13 +2,57 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agents"))
-
+from typing import List
 from strands_evals import Case
 from models import Coordinates
 
+# ── Clarification Cases ───────────────────────────────────────────────────────
+# Cases where the agent must ask the user for their location before calling tools.
+# Per the system prompt: "Assistant will always ask user for their location
+# when location is not given in user query."
+
+CLARIFICATION_CASES: List[Case] = [
+    Case(
+        name="clarification-missing-location-01",
+        input="Get prices for Unleaded 91 fuel near me",
+        metadata={
+            "category": "clarification",
+            "subcategory": "missing-location",
+            "difficulty": "easy",
+            "tags": ["u91", "missing-location"],
+            "goal": "Agent must ask the user for their location — no tools should be called",
+            "expected_tools": [],
+        }
+    ),
+    Case(
+        name="clarification-missing-location-02",
+        input="Find me the cheapest fuel",
+        metadata={
+            "category": "clarification",
+            "subcategory": "missing-location",
+            "difficulty": "easy",
+            "tags": ["missing-location", "generic-query"],
+            "goal": "Agent must ask the user for their location — no tools should be called",
+            "expected_tools": [],
+        }
+    ),
+    Case(
+        name="clarification-missing-location-03",
+        input="Are there any LPG stations nearby?",
+        metadata={
+            "category": "clarification",
+            "subcategory": "missing-location",
+            "difficulty": "easy",
+            "tags": ["lpg", "missing-location"],
+            "goal": "Agent must ask the user for their location — no tools should be called",
+            "expected_tools": [],
+        }
+    ),
+]
+
 # ── Location Cases ────────────────────────────────────────────────────────────
 
-LOCATION_CASES: list[Case] = [
+LOCATION_CASES: List[Case] = [
     Case(
         name="location-geocode-01",
         input="Nearest fuel station to 125 Denison St, Hamilton NSW 2303",
@@ -97,7 +141,7 @@ LOCATION_CASES: list[Case] = [
 
 # ── Fuel Cases ────────────────────────────────────────────────────────────────
 
-FUEL_CASES: list[Case] = [
+FUEL_CASES: List[Case] = [
     Case(
         name="fuel-location-p95-01",
         input="Find cheapest P95 near 125 Denison St, Hamilton NSW 2303",
@@ -235,12 +279,17 @@ DIRECTIONS_CASES: list[Case] = [
             "subcategory": "route",
             "difficulty": "easy",
             "tags": ["driving", "sydney", "parramatta"],
-            "goal": "Provide turn-by-turn driving directions from Sydney CBD to Parramatta",
-            "expected_tools": ["directions_tool"],
+            "goal": "Geocode both locations then provide turn-by-turn driving directions from Sydney CBD to Parramatta",
+            # Per system prompt Example 2: geocode_location is called for each address
+            # before passing coordinates to directions_tool.
+            "expected_tools": ["geocode_location", "directions_tool"],
             "expected_tool_params": {
+                "geocode_location": {
+                    "address": "Sydney CBD NSW"
+                },
                 "directions_tool": {
-                    "origin": "Sydney CBD, NSW",
-                    "destination": "Parramatta, NSW"
+                    "origin": "Sydney CBD NSW",
+                    "destination": "Parramatta NSW"
                 }
             }
         }
@@ -253,30 +302,38 @@ DIRECTIONS_CASES: list[Case] = [
             "subcategory": "route",
             "difficulty": "medium",
             "tags": ["driving", "newcastle", "airport"],
-            "goal": "Provide turn-by-turn driving directions from Newcastle to Sydney Airport",
-            "expected_tools": ["directions_tool"],
+            "goal": "Geocode both locations then provide turn-by-turn driving directions from Newcastle to Sydney Airport",
+            # Per system prompt Example 2: geocode_location is called for each address
+            # before passing coordinates to directions_tool.
+            "expected_tools": ["geocode_location", "directions_tool"],
             "expected_tool_params": {
+                "geocode_location": {
+                    "address": "Newcastle NSW"
+                },
                 "directions_tool": {
-                    "origin": "Newcastle, NSW",
-                    "destination": "Sydney Airport, NSW"
+                    "origin": "Newcastle NSW",
+                    "destination": "Sydney Airport NSW"
                 }
             }
         }
     ),
     Case(
-        name="directions-reverse-01",
-        input="What address is at coordinates -33.8688, 151.2093?",
+        name="directions-route-03",
+        input="Give me driving directions from 351 Windsor Rd, Baulkham Hills NSW 2153 to 64 North Rocks Rd, North Rocks NSW 2151",
         metadata={
             "category": "directions",
-            "subcategory": "reverse-geocode",
-            "difficulty": "easy",
-            "tags": ["reverse-geocode", "sydney-cbd"],
-            "goal": "Convert geographic coordinates to a human-readable address in Sydney CBD",
-            "expected_tools": ["reverse_geocode_tool"],
+            "subcategory": "route",
+            "difficulty": "medium",
+            "tags": ["driving", "baulkham-hills", "north-rocks", "street-address"],
+            "goal": "Geocode both street addresses then provide turn-by-turn driving directions",
+            "expected_tools": ["geocode_location", "directions_tool"],
             "expected_tool_params": {
-                "reverse_geocode_tool": {
-                    "latitude": -33.8688,
-                    "longitude": 151.2093
+                "geocode_location": {
+                    "address": "351 Windsor Rd, Baulkham Hills NSW 2153"
+                },
+                "directions_tool": {
+                    "origin": "351 Windsor Rd, Baulkham Hills NSW 2153",
+                    "destination": "64 North Rocks Rd, North Rocks NSW 2151"
                 }
             }
         }

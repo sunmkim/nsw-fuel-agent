@@ -9,6 +9,7 @@ curl -X POST http://localhost:8080/invocations \
 ```
 
 ## How to deploy
+There are 2 components of the agent you must deploy: agent runtime and agent memory. For memory, we use Terraform, and for agent runtime, we will use the AgentCore CLI SDK.
 
 ### Memory
 Using Terraform, we will deploy Bedrock Agentcore memory in AWS. See `terraform/agentcore/main.tf` for more details. Run:
@@ -18,4 +19,5 @@ $ terraform apply
 ```
 
 ### Agent
-Run: `bash agents/deploy_agent/sh`
+Run: `bash agents/deploy_agent.sh`.
+The script above first configures the runtime with names, settings, memory to use, etc, and then launches it into AWS Bedrock. Then we confirm deployment status and test invoke with a simulated query.
