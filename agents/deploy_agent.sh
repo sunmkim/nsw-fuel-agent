@@ -1,19 +1,14 @@
 # we will use agentcore starter toolkit to deploy our agent
 
-# configure and deplpoy
-uv run agentcore configure -e agent.py
-uv run agentcore launch \
-    --env NSW_API_KEY='<api-key-here>' \
-    --env NSW_AUTH_HEADER='Basic <api-key-here>' \
-    --env OPENAI_API_KEY='<api-key-here>' \
-    --env MAPBOX_API_KEY='<api-key-here>' \
-    --env AWS_REGION='us-east-1'
+# configure and deploy
+pixi run configure
+pixi run launch
 
 # check deployment status
-uv run agentcore status
+pixi run status
 
 # test deployment
-uv run agentcore invoke '{"prompt": "Hello. What can you do?"}'
+pixi run invoke
 
 # to cleanup, run below command:
 # agentcore destroy

@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from bedrock_agentcore_starter_toolkit.operations.memory.manager import MemoryManager
-from bedrock_agentcore.memory.session import MemorySession
+from bedrock_agentcore.memory.session import MemorySession, MemorySessionManager
 
 load_dotenv()
 
@@ -54,3 +54,15 @@ def create_memory_session(
 
     print(f"✅ Memory session created for actor: {actor_id}, and session: {session_id}")
     return memory_session
+
+
+def setup_memory(memory_id: str, actor_id: str, session_id: str) -> MemorySession:
+    session_manager = MemorySessionManager(memory_id=memory_id, region_name=os.getenv("AWS_REGION"))
+
+    # use same session id for different agents to share memory
+    assistant_memory_session = create_memory_session(
+        actor_id=actor_id,
+        session_id=session_id,
+        memory_session_manager=session_manager
+    )
+    return assistant_memory_session

@@ -191,10 +191,16 @@ def main():
 
     # get available agent runtimes
     available_agents = get_agent_runtimes()
+    runtime_arn = None
     for i,agent in enumerate(available_agents):
-        if "nsw_service_station_assistant" in agent["agentRuntimeId"]:
+        if "nsw_fuel_agent" in agent["agentRuntimeId"]:
+            print(agent)
             runtime_arn = available_agents[i]['agentRuntimeArn']
             break
+
+    if runtime_arn is None:
+        st.error("No suitable agent runtime found. Please check agent deployment.")
+        return
 
     # Initialize chat history
     if "messages" not in st.session_state:

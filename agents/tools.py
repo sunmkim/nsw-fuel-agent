@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 NSW_API_BASE_URL="https://api.onegov.nsw.gov.au"
 
 @tool
-def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_API_KEY")) -> Tuple[str, List[float]]:
+def geocode_location(address: str, mapbox_access_token: str = os.getenv("MAPBOX_API_KEY")) -> Coordinates:
     """
     Helper function to convert a location into its latitute and longitude
 
